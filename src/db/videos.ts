@@ -1,5 +1,5 @@
-import { randomUUID } from "crypto";
-import type { Database } from "bun:sqlite";
+import { randomUUID } from 'crypto';
+import type { Database } from 'bun:sqlite';
 
 export type Video = {
   id: string;
@@ -63,7 +63,7 @@ export function getVideos(db: Database, userID: string): Video[] {
 
 export function createVideo(
   db: Database,
-  params: CreateVideoParams,
+  params: CreateVideoParams
 ): Video | undefined {
   const id = randomUUID();
 
