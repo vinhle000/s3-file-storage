@@ -5,6 +5,7 @@ import type { ApiConfig } from '../config';
 import type { BunRequest } from 'bun';
 import { BadRequestError, NotFoundError, UserForbiddenError } from './errors';
 import path from 'path';
+import { randomBytes } from 'crypto';
 type Thumbnail = {
   data: ArrayBuffer;
   mediaType: string;
@@ -63,6 +64,11 @@ export async function handlerUploadThumbnail(cfg: ApiConfig, req: BunRequest) {
   }
 
   const mediaType = file.type;
+
+  if (mediaType !== 'image/jpeg' && mediaType !== 'image/png') {
+    throw new BadRequestError('File not jpeg or png image file');
+  }
+
   const imageDataBuffer = await file.arrayBuffer();
   const thumbnail: Thumbnail = {
     data: imageDataBuffer,
@@ -78,30 +84,21 @@ export async function handlerUploadThumbnail(cfg: ApiConfig, req: BunRequest) {
   if (video.userID !== userID) {
     throw new UserForbiddenError('unauthorized video access');
   }
-
-  // videoThumbnails.set(videoId, thumbnail);
-
-  // OLD
-  // const thumbnailUrl = `http://localhost:${cfg.port}/api/thumbnails/${videoId}`;
-  // video.thumbnailURL = thumbnailUrl;
-
-  const imageDataBufferString = Buffer.from(imageDataBuffer).toString('base64');
-  // // Old - base64 string to store dataURL
-  // const thumbnailURL = `data:${mediaType};base64,${imageDataBufferString}`;
-  // video.thumbnailURL = thumbnailURL;
-
+  const generatedThumbnailString = randomBytes(32).toString('base64url');
+  // const imageDataBufferString = Buffer.from(imageDataBuffer).toString('base64');
   const assetFilePath = path.join(
     cfg.assetsRoot,
-    `${videoId}.${mediaType.split('/')[1]}`
+    `${generatedThumbnailString}.${mediaType.split('/')[1]}`
   );
+
+  console.log(` generatedThumbnailString \n: ${generatedThumbnailString}`);
+
   const assetURL = `http://localhost:${cfg.port}/` + assetFilePath;
   video.thumbnailURL = assetURL;
   await Bun.write(assetFilePath, imageDataBuffer);
 
   updateVideo(cfg.db, video);
-  console.log(
-    `DEBUG ------ updated video obj ${JSON.stringify(video, null, 2)}`
-  );
+
   // Test your handler manually by using the Tubely UI to upload the boots-image-horizontal.png image. You should see the thumbnail update in the UI!
   return respondWithJSON(200, video);
 }
