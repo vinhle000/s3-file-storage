@@ -1,5 +1,6 @@
-import { newDatabase } from "./db/db";
-import type { Database } from "bun:sqlite";
+import { newDatabase } from './db/db';
+import type { Database } from 'bun:sqlite';
+import { s3, type S3Client } from 'bun';
 
 export type ApiConfig = {
   db: Database;
@@ -10,20 +11,29 @@ export type ApiConfig = {
   s3Bucket: string;
   s3Region: string;
   s3CfDistribution: string;
+  s3Client: S3Client;
   port: string;
 };
 
-const pathToDB = envOrThrow("DB_PATH");
-const jwtSecret = envOrThrow("JWT_SECRET");
-const platform = envOrThrow("PLATFORM");
-const filepathRoot = envOrThrow("FILEPATH_ROOT");
-const assetsRoot = envOrThrow("ASSETS_ROOT");
-const s3Bucket = envOrThrow("S3_BUCKET");
-const s3Region = envOrThrow("S3_REGION");
-const s3CfDistribution = envOrThrow("S3_CF_DISTRO");
-const port = envOrThrow("PORT");
+const pathToDB = envOrThrow('DB_PATH');
+const jwtSecret = envOrThrow('JWT_SECRET');
+const platform = envOrThrow('PLATFORM');
+const filepathRoot = envOrThrow('FILEPATH_ROOT');
+const assetsRoot = envOrThrow('ASSETS_ROOT');
+const s3Bucket = envOrThrow('S3_BUCKET');
+const s3Region = envOrThrow('S3_REGION');
+const s3CfDistribution = envOrThrow('S3_CF_DISTRO');
+const accessId = envOrThrow('AWS_ACCESS_KEY_ID');
+const secretAccessKey = envOrThrow('AWS_SECRET_ACCESS_KEY');
+const port = envOrThrow('PORT');
 
 const db = newDatabase(pathToDB);
+
+const client = new Bun.S3Client({
+  accessKeyId: accessId,
+  secretAccessKey: secretAccessKey,
+  bucket: s3Bucket,
+});
 
 export const cfg: ApiConfig = {
   db: db,
@@ -34,6 +44,7 @@ export const cfg: ApiConfig = {
   s3Bucket: s3Bucket,
   s3Region: s3Region,
   s3CfDistribution: s3CfDistribution,
+  s3Client: client,
   port: port,
 };
 
